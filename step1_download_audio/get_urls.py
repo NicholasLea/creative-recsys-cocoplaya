@@ -6,6 +6,7 @@ import spotipy.util as util
 import time
 from collections import defaultdict
 from spotipy.client import SpotifyException
+from urllib3.exceptions import ReadTimeoutError
 
 
 def get_all_uris(playlists_path):
@@ -21,6 +22,7 @@ def get_all_uris(playlists_path):
             for playlist in mpd_slice['playlists']:
                 for track in playlist['tracks']:
                     uris[track['track_uri'][14:]]
+            print('Read :', filename)
     return list(uris.keys())
 
 
@@ -28,7 +30,7 @@ def get_urls(uris, client_id, client_secret):
     partial_output_file = "partial_output.json"
     username = ""
     scope = ","
-    redirect_uri = "http://localhost/"
+    redirect_uri = "http://localhost:8081"
     token = util.prompt_for_user_token(username, scope,
             client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
     market = "US"
@@ -45,20 +47,24 @@ def get_urls(uris, client_id, client_secret):
             results = None
             while results == None:
                 try:
-                    sp = spotipy.Spotify(auth=token)
+                    sp = spotipy.Spotify(auth=token, requests_timeout=120)
                     ids = ",".join(all_ids[_iter*iter_size:(_iter+1)*iter_size])
                     results = sp._get('tracks?ids=%s&market=%s'%(ids, market), limit=iter_size)
                 except SpotifyException:
                     # Refresh token
                     print ("Refreshing token...")
-                    time.sleep(10)
+                    time.sleep(1)
                     token = util.prompt_for_user_token(username, scope,
                         client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
-            for res in results['tracks']:
-                if res is not None and res['preview_url'] is not None:
-                    url = res['preview_url']
-                    uri = res['uri'][14:]
-                    existing_uris[uri] = url
+                except ReadTimeoutError:
+                    break
+
+            if results is not None:
+                for res in results['tracks']:
+                    if res is not None and res['preview_url'] is not None:
+                        url = res['preview_url']
+                        uri = res['uri'][14:]
+                        existing_uris[uri] = url
             if _iter % (num_iter//10) == 0:
                 json.dump(existing_uris, open(partial_output_file, "w"))
         if res_iter > 0:
@@ -80,15 +86,15 @@ if __name__ == '__main__':
     uris_file = "all_dicts_uri.json"
     if not os.path.isfile(uris_file):
         # Specify the location of the MPD:
-        mpd_path = "mpd/data/"
+        mpd_path = "/Users/nicholas/Documents/Dataset/spotify_million_playlist_dataset/data/"
         all_uris = get_all_uris(mpd_path)
         json.dump(all_uris, open(uris_file, 'w'))
     else:
         all_uris = json.load(open(uris_file, 'r'))
 
     # Specify the client secret and id of Spotify API:
-    client_secret = ""
-    client_id = ""
+    client_secret = "f6b4ccccc6bd45c6b62b7bf3ccd8e810"
+    client_id = "18b9afde29404dfc95765a87667683d4"
 
     all_dicts = get_urls(all_uris, client_id, client_secret)
     if all_dicts != None:
