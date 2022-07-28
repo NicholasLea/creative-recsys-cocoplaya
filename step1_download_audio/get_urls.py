@@ -30,6 +30,7 @@ def get_urls(uris, client_id, client_secret):
     partial_output_file = "partial_output_bak1.json"
     username = ""
     scope = ","
+    # https://community.spotify.com/t5/Spotify-for-Developers/INVALID-CLIENT-Invalid-redirect-URI/td-p/5228936
     redirect_uri = "http://localhost:8888/callback"
     token = util.prompt_for_user_token(username, scope,
             client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
