@@ -27,10 +27,10 @@ def get_all_uris(playlists_path):
 
 
 def get_urls(uris, client_id, client_secret):
-    partial_output_file = "partial_output.json"
+    partial_output_file = "partial_output_bak1.json"
     username = ""
     scope = ","
-    redirect_uri = "http://localhost:8081"
+    redirect_uri = "http://localhost:8888/callback"
     token = util.prompt_for_user_token(username, scope,
             client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
     market = "US"
@@ -47,9 +47,13 @@ def get_urls(uris, client_id, client_secret):
             results = None
             while results == None:
                 try:
-                    sp = spotipy.Spotify(auth=token, requests_timeout=120)
+                    # print('try to get sp')
+                    sp = spotipy.Spotify(auth=token, requests_timeout=10)
+                    # print('sp:',sp)
                     ids = ",".join(all_ids[_iter*iter_size:(_iter+1)*iter_size])
+                    # print('ids:', ids)
                     results = sp._get('tracks?ids=%s&market=%s'%(ids, market), limit=iter_size)
+                    # print('results:', results)
                 except SpotifyException:
                     # Refresh token
                     print ("Refreshing token...")
@@ -91,6 +95,7 @@ if __name__ == '__main__':
         json.dump(all_uris, open(uris_file, 'w'))
     else:
         all_uris = json.load(open(uris_file, 'r'))
+        # print(f'Read {uris_file}')
 
     # Specify the client secret and id of Spotify API:
     client_secret = "f6b4ccccc6bd45c6b62b7bf3ccd8e810"
