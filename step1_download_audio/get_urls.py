@@ -53,7 +53,8 @@ def get_urls(uris, client_id, client_secret):
                     # print('sp:',sp)
                     ids = ",".join(all_ids[_iter*iter_size:(_iter+1)*iter_size])
                     # print('ids:', ids)
-                    results = sp._get('tracks?ids=%s&market=%s'%(ids, market), limit=iter_size)
+                    # results = sp._get('tracks?ids=%s&market=%s'%(ids, market), limit=iter_size)
+                    results = sp._get('tracks?ids=%s&market=%s' % (ids, market), limit=iter_size)
                     # print('results:', results)
                 except SpotifyException:
                     # Refresh token
